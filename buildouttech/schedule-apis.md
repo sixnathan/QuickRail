@@ -2,7 +2,13 @@
 
 ## Executive Summary
 
-For a rail booking MVP, **GTFS static feeds are the recommended approach** for schedule data. They're standardized, widely available across EU, and free for commercial use under permissive licenses. HAFAS APIs provide real-time capabilities but have rate limits and uncertain futures. The EU regulatory environment (Delegated Regulation 2017/1926) mandates open transport data via National Access Points (NAPs).
+For a rail booking MVP, **GTFS static feeds are the recommended approach** for schedule data. They are standardized, widely available across the EU, and free for commercial use under permissive licenses. HAFAS APIs provide real-time capabilities but have rate limits and uncertain futures. The EU regulatory environment (Delegated Regulation 2017/1926) mandates open transport data via National Access Points (NAPs).
+
+**Key Findings:**
+- Germany (GTFS.de) offers one of the world's largest GTFS datasets with daily updates
+- DB HAFAS API has been permanently shut off - use db-vendo-client with lower rate limits
+- MERITS (UIC) provides pan-European integrated timetables covering ~600,000 train services (paid license)
+- EU PSI Directive (2019/1024) establishes transport data as "high-value" requiring free reuse
 
 ---
 
@@ -18,8 +24,8 @@ For a rail booking MVP, **GTFS static feeds are the recommended approach** for s
 | **Netherlands** | ND-OV loket | Via GTFS-NL | Regular | CC0 |
 | **Spain** | Renfe | https://data.renfe.com/dataset?res_format=GTFS | Varies | CC-BY 4.0 |
 | **UK** | Rail Delivery Group | ATOC-CIF format (requires conversion) | Weekly | CC-BY 2.0 |
-| **Austria** | ÖBB | Via Transitland/Mobility Database | Varies | Check source |
-| **Italy** | Trenitalia | Limited official; available via Transitland | Varies | Check source |
+| **Austria** | ÖBB | https://data.oebb.at/de/datensaetze~soll-fahrplan-gtfs~ | Yearly (Dec-Dec) | Open |
+| **Italy** | Trenitalia | Via Transitland (regional only) | Varies | Check source |
 
 ### Key GTFS Resources
 
@@ -145,13 +151,23 @@ EU Delegated Regulation 2017/1926 requires member states to publish transport da
 | Spain | https://datos.gob.es/ + https://data.renfe.com |
 | UK | https://www.nationalrail.co.uk/developers/ |
 
-### MERITS Database
+### MERITS Database (UIC)
 
-UIC's comprehensive European timetable:
-- 67,680 European stations with geocoordinates
-- Updated 4x/week
-- EDIFACT format (European standard)
-- 12-month timetables (mid-December to mid-December)
+Pan-European integrated timetable - the most comprehensive source:
+- ~600,000 train services across Europe (including Russia, Turkey)
+- 67,680 stations with geocoordinates
+- Updated 3-4x/week
+- Available in GTFS and EDIFACT formats
+- Minimum connection times and pedestrian links included
+
+**Commercial Access:**
+- Third-party access approved April 2017, available since March 2019
+- Requires paid license via UIC Shop: https://shop.uic.org/en/460-merits
+- License tiers:
+  - MERITS Gold (full Europe, 3x/week updates)
+  - MERITS Gold Limited (1-3 countries, lower cost)
+- Contact: merits@uic.org for pricing
+- Data provided "as is" with no warranties on completeness
 
 ---
 
@@ -167,10 +183,27 @@ Standard files in ZIP archive:
 - `calendar.txt` / `calendar_dates.txt` - Service dates
 
 Parsing libraries:
-- **Python**: `gtfs-kit`, `partridge`, `gtfstk`
-- **JavaScript**: `gtfs`, `gtfs-utils`
-- **Rust**: `gtfs-structures`, `transit_model`
-- **Go**: `gtfs`
+
+**Python (Recommended for MVP):**
+- `gtfs-kit` - Full toolkit with validation, merging, analysis
+- `pygtfs` - SQLite-backed interface for efficient queries
+- `partridge` - Memory-efficient for large feeds
+- `transitfeed` (Google) - Official validation library
+
+**JavaScript/Node.js:**
+- `node-gtfs` - SQLite storage, multiple feed support
+- `gtfs-utils` - Utilities for calendar flattening, time computation
+- `gtfs-to-geojson` - Convert stops/shapes to GeoJSON
+
+**TypeScript:**
+- `gtfs-types` - Type definitions for GTFS structures
+
+**Go:**
+- `gtfs` - Native Go parsing
+
+**Rust:**
+- `gtfs-structures` - Parsing and validation
+- `transit_model` - GTFS <-> NeTEx conversion
 
 ### NeTEx
 
@@ -204,9 +237,28 @@ Requires conversion to GTFS:
 
 ### Key Considerations
 
-1. **CC0 (Netherlands)**: No restrictions whatsoever
-2. **CC-BY (Germany, Spain, UK)**: Must credit source
+1. **CC0 (Netherlands)**: No restrictions whatsoever - most permissive
+2. **CC-BY (Germany, Spain, UK)**: Must credit source in application
 3. **ODbL (SNCF France)**: Must share derivative databases under same license
+4. **Open Government License (UK)**: Similar to CC-BY
+
+### EU Regulatory Framework
+
+**Delegated Regulation (EU) 2017/1926:**
+- Requires National Access Points (NAPs) for multimodal travel info
+- Mandates NeTEx format (GTFS often provided as alternative)
+- Covers static timetables, routes, stops, fares
+
+**PSI/Open Data Directive (EU) 2019/1024:**
+- Transport data classified as "high-value"
+- Must be available free of charge
+- Machine-readable formats required
+- APIs and bulk downloads mandated
+- Applies to public undertakings (rail operators included)
+
+**Implementing Regulation (EU) 2023/138:**
+- Lists transport as high-value dataset category
+- CC-BY 4.0 recommended license
 
 ### Commercial API Alternatives
 
@@ -214,11 +266,16 @@ If open data proves insufficient:
 
 | Provider | Coverage | Notes |
 |----------|----------|-------|
-| **Trainline Partner Solutions** | 87 operators, 24 countries | B2B API, contact required |
-| **Lyko** | Renfe, Trenitalia, others | Commercial integration |
-| **SilverRail** | Multi-operator | Enterprise |
+| **Trainline Partner Solutions** | 280+ rail/coach carriers | B2B API, 20+ year track record |
+| **Omio** | 3,000+ transport providers | API + white-label solutions |
+| **Lyko** | Renfe, Trenitalia, DB, others | No affiliation requirements |
+| **Travelfusion** | 360+ carriers | tfRail API for rail content |
+| **Distribusion** | Ground transport globally | REST API |
+| **Amadeus** | 90+ railways worldwide | SOAP APIs, GDS integration |
+| **Sabre** | 9 major EU networks | REST APIs |
 
-Trainline API: https://tps.thetrainline.com/our-products/global-api/
+**Trainline:** https://tps.thetrainline.com/our-products/global-api/
+**Omio B2B:** https://www.omio.com/b2b
 
 ---
 
@@ -243,22 +300,52 @@ Trainline API: https://tps.thetrainline.com/our-products/global-api/
 - Cache GTFS feeds locally, refresh daily
 - Build station matching layer (normalize names across countries)
 - Handle timezone differences (esp. cross-border routes)
+- Consider MERITS for cross-border journeys if free data proves insufficient
+
+### Data Gaps to Note
+
+- **Italy (Trenitalia)**: No comprehensive official GTFS for national network; ViaggiaTreno API is unreliable
+- **Cross-border**: Individual country feeds may not include international trains - MERITS fills this gap
+- **Real-time delays**: GTFS-RT coverage varies significantly by operator
 
 ---
 
 ## Sources
 
+### Official Data Portals
 - [GTFS.de - Germany](https://gtfs.de/en/)
+- [SNCF Open Data](https://ressources.data.sncf.com/)
 - [transport.data.gouv.fr - France NAP](https://transport.data.gouv.fr)
 - [opentransportdata.swiss](https://opentransportdata.swiss/en/)
-- [Mobility Database](https://mobilitydatabase.org/feeds)
+- [ÖBB Open Data](https://data.oebb.at/)
+- [Mobilitydata Austria](https://www.mobilitydata.gv.at/)
+- [NS API Portal](https://apiportal.ns.nl/)
+- [Renfe Data](https://data.renfe.com/)
+- [UK National Rail Developers](https://www.nationalrail.co.uk/developers/)
+
+### Aggregators and Registries
+- [Mobility Database](https://mobilitydatabase.org/feeds) - Successor to TransitFeeds
 - [European Transport Feeds](https://eu.data.public-transport.earth/)
+- [Transitland](https://transit.land/)
+- [data.europa.eu Rail Timetables](https://data.europa.eu/data/datasets/rail-timetables)
+
+### Technical Resources
 - [hafas-client GitHub](https://github.com/public-transport/hafas-client)
 - [v6.db.transport.rest](https://v6.db.transport.rest/)
+- [GTFS Specification](https://gtfs.org/)
+- [NeTEx Standard](https://www.netex-cen.eu/)
+- [gtfs-kit (Python)](https://github.com/mrcagney/gtfs_kit)
+
+### Pan-European Data
 - [MERITS/UIC](https://uic.org/passenger/passenger-services-group/merits)
-- [NS API Portal](https://apiportal.ns.nl/)
+- [UIC Shop - MERITS Licenses](https://shop.uic.org/en/460-merits)
+
+### Commercial APIs
 - [Trainline Partner Solutions](https://tps.thetrainline.com/)
-- [data.europa.eu Rail Timetables](https://data.europa.eu/data/datasets/rail-timetables)
-- [UK National Rail Developers](https://www.nationalrail.co.uk/developers/)
-- [Renfe Data](https://data.renfe.com/)
+- [Omio B2B](https://www.omio.com/b2b)
+- [Lyko Rail API](https://lyko.tech/en/portfolio/train-api/)
+
+### Regulatory
+- [EU Delegated Regulation 2017/1926](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32017R1926)
+- [PSI/Open Data Directive 2019/1024](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32019L1024)
 - [ODbL License](https://opendatacommons.org/licenses/odbl/)
